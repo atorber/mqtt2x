@@ -59,4 +59,4 @@ const rule: Rule = {
 }
 ```
 
-你需要基于示例消息的结构编写对应的 jsonata 表达式，即使用 $.topic和$.payload 可以分别拿到 MQTT 消息中的 topic 和 payload
+你需要基于示例消息的结构编写对应的 jsonata 表达式，即使用 `$.topic`和`$.payload` 可以分别拿到 MQTT 消息中的 topic 和 payload
