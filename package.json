@@ -1,7 +1,7 @@
 {
-  "name": "ts-koa-starter",
+  "name": "mqtt2x",
   "version": "1.0.0",
-  "description": "一个简单的koa+typescript+typeorm的起手式",
+  "description": "一个mqtt转发到其他服务的工具",
   "tags": [
     "orm",
     "typescript",
@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "start": "nodemon",
+    "test":"ts-node -r tsconfig-paths/register src/test.ts",
     "build": "rm -rf dist && tsc",
     "pro": "npx pm2 start ecosystem.config.js --env production",
     "restart": "pm2 restart ecosystem.config.js --env production",
@@ -16,6 +17,7 @@
   },
   "dependencies": {
     "dotenv": "^8.2.0",
+    "jsonata": "^2.0.3",
     "koa": "^2.7.0",
     "koa-bodyparser": "^4.2.1",
     "koa-router": "^7.4.0"
