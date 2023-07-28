@@ -1,73 +1,77 @@
-import { RawMessage, Query, dataConversion } from "./mods/message";
+import { RawMessage, Query, dataConversion, Rule, Message } from "./mods/message";
 import * as mqtt from 'mqtt'
 import { v4 } from 'uuid'
 
-const rawMessage: RawMessage = {
-    topic: 'abc/bcd',
-    payload: '{"list":[{"value":4},{"value":7},{"value":13}],"key":100}',
+const rule: Rule = {
+    source: 'testtopic/#', //数据来源topic，支持通配符
+    compute: {
+        type: "json", //固定字符串，目前仅支持json
+        filter: ``, //过滤条件，jsonata表达式
+        query: {
+            topicExpression: `$.topic`, //目标格式的topic表达式
+            payloadExpression: `$.payload`, //目标格式的topic表达式
+        },
+    },
+    destinations: [''], //数据目的地，暂未支持
 };
 
-const query: Query = {
-    topicExpression: 'payload.key',
-    payloadExpression: 'payload',
-};
+// const rawMessage: RawMessage = {
+//     topic: 'testtopic/123',
+//     payload: '{"list":[{"value":4},{"value":7},{"value":13}],"key":100}',
+// };
 
-(async () => {
-    const result = await dataConversion(rawMessage, query);
-    console.log(result);
-})();
+// (async () => {
+//     const result = await dataConversion(rawMessage, rule);
+//     if (result && result.topic) {
+//         console.log('result:', result);
+//     }
+// })();
 
-// 使用用户名和密码方式连接二公司MQTT
-const HOST = '0.0.0.0'
-const PORT = 1883
-const optionsBaetyl = {
-    host: HOST,
+const mqttOptions = {
+    host: 'broker.emqx.io',
     username: '',
     password: '',
-    port: PORT,
+    port: 1883,
     clientId: v4()
 }
 
-const baetylCleint = mqtt.connect(optionsBaetyl)
+const mqttCleint = mqtt.connect(mqttOptions)
 
-const propertySub = `property/post`
-const d2cResponseSub = `response/d2c`
+// 建立连接并订阅数据源
+mqttCleint.on('connect', function () {
+    console.log('数据源MQTT客户端连接成功')
 
-baetylCleint.on('connect', function () {
-    console.log('baetylCleint客户端连接成功')
-
-    baetylCleint.subscribe(propertySub, function (err) {
+    mqttCleint.subscribe(rule.source, function (err) {
         if (!err) {
-            console.debug('代理服务订阅属性消息成功:', propertySub)
+            console.debug('订阅数据源成功')
         } else {
-            console.debug('代理服务订阅属性消息失败:', propertySub)
-        }
-    })
-    baetylCleint.subscribe(d2cResponseSub, function (err) {
-        if (!err) {
-            console.debug('代理服务订阅属性消息成功:', d2cResponseSub)
-        } else {
-            console.debug('代理服务订阅属性消息失败:', d2cResponseSub)
+            console.debug('订阅数据源失败')
         }
     })
 
 })
 
-baetylCleint.on('disconnect', async function () {
-    baetylCleint.reconnect()
+// 断开连接时重试连接
+mqttCleint.on('disconnect', async function () {
+    mqttCleint.reconnect()
 })
 
-baetylCleint.on('error', async function (err) {
+// 连接报错
+mqttCleint.on('error', async function (err) {
     console.log('代理服务客户端连接错误', err)
 })
 
-baetylCleint.on('message', async function (topic, message) {
-    console.log('从代理服务订阅到的消息：')
-    console.log(topic, message.toString())
+// 接收和处理消息
+mqttCleint.on('message', async function (topic, message) {
+    // console.log('从代理服务订阅到的消息：')
+    // console.log(topic,'\n', message.toString())
     const rawMessage: RawMessage = {
         topic,
         payload: message.toString(),
     };
-    const result = await dataConversion(rawMessage, query);
-    console.log(result);
+    const result = await dataConversion(rawMessage, rule);
+
+    if (result && result.topic) {
+        console.log('转换成功:', JSON.stringify(result));
+    }
 })
