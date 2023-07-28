@@ -11,6 +11,7 @@ export type Message = {
 };
 
 export type Query = {
+    filterExpression?: string;
     topicExpression: string;
     payloadExpression: string;
 };
@@ -26,9 +27,18 @@ export const dataConversion: DataConversion = async function (
         topic: rawMessage.topic,
         payload: JSON.parse(rawMessage.payload)
     }
-    const expression = jsonata(`{"topic":$string(${query.topicExpression}),"payload":$string(${query.payloadExpression})}`);
+    if (query.filterExpression) {
+        const filterExpression = jsonata(query.filterExpression);
+        const isMatch: boolean = await filterExpression.evaluate(message);
+        if (!isMatch) {
+            console.debug('is not match the rlue')
+            return
+        }
+    }
 
-    const newMessage: Message = await expression.evaluate(message);
+    const messageExpression = jsonata(`{"topic":$string(${query.topicExpression}),"payload":$string(${query.payloadExpression})}`);
+
+    const newMessage: Message = await messageExpression.evaluate(message);
 
     return newMessage;
 };
