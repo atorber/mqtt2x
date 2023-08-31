@@ -18,13 +18,12 @@
             }
         },
         "ali_iot":{
-            "type":"mqtt",
+            "type":"http",
             "info":{
-                "endpoint":"broker.emqx.io",
-                "port":1883,
-                "username":"",
-                "password":"",
-                "clientid":""
+                "url":"broker.emqx.io",
+                "path":"/mqtt",
+                "port":80,
+                "token":""
             }
         }
     },
