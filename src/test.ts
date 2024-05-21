@@ -15,17 +15,20 @@ const rule: Rule = {
     destinations: [''], //数据目的地，暂未支持
 };
 
-// const rawMessage: RawMessage = {
-//     topic: 'testtopic/123',
-//     payload: '{"list":[{"value":4},{"value":7},{"value":13}],"key":100}',
-// };
+const rawMessage: RawMessage = {
+    topic: 'testtopic/123',
+    params: {"list":[{"value":4},{"value":7},{"value":13}],"key":100},
+    rule
+};
 
-// (async () => {
-//     const result = await dataConversion(rawMessage, rule);
-//     if (result && result.topic) {
-//         console.log('result:', result);
-//     }
-// })();
+console.log(JSON.stringify(rawMessage));
+
+(async () => {
+    const result = await dataConversion(rawMessage);
+    if (result && result.topic) {
+        console.log('result:', result);
+    }
+})();
 
 const mqttOptions = {
     host: 'broker.emqx.io',
@@ -41,7 +44,7 @@ const mqttCleint = mqtt.connect(mqttOptions)
 mqttCleint.on('connect', function () {
     console.log('数据源MQTT客户端连接成功')
 
-    mqttCleint.subscribe(rule.source, function (err) {
+    mqttCleint.subscribe('#', function (err) {
         if (!err) {
             console.debug('订阅数据源成功')
         } else {
@@ -65,11 +68,13 @@ mqttCleint.on('error', async function (err) {
 mqttCleint.on('message', async function (topic, message) {
     // console.log('从代理服务订阅到的消息：')
     // console.log(topic,'\n', message.toString())
+    const messageJson = JSON.parse(message.toString())
     const rawMessage: RawMessage = {
         topic,
-        payload: message.toString(),
+        params:messageJson.params,
+        rule:messageJson.rule
     };
-    const result = await dataConversion(rawMessage, rule);
+    const result = await dataConversion(rawMessage);
 
     if (result && result.topic) {
         console.log('转换成功:', JSON.stringify(result));

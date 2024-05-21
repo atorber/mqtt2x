@@ -40,32 +40,74 @@ const rule: Rule = {
     destinations: [''], //数据目的地，暂未支持
 };
 
-// const rawMessage: RawMessage = {
-//     topic: 'testtopic/123',
-//     payload: '{"list":[{"value":4},{"value":7},{"value":13}],"key":100}',
-// };
+const rawMessage: RawMessage = {
+    topic: 'testtopic/123',
+    payload: {"list":[{"value":4},{"value":7},{"value":13}],"key":100},
+    rule
+};
 
-// (async () => {
-//     const result = await dataConversion(rawMessage, rule);
-//     if (result && result.topic) {
-//         console.log('result:', result);
-//     }
-// })();
+(async () => {
+    const result = await dataConversion(rawMessage);
+    if (result && result.topic) {
+        console.log('result:', result);
+    }
+})();
 
 ```
 
 ### 在收到MQTT消息时调用
+
+- 客户端发布消息
+
+topic:testtopic/123
+
+payload:
+
+```
+{
+    "params": {
+        "list": [
+            {
+                "value": 4
+            },
+            {
+                "value": 7
+            },
+            {
+                "value": 13
+            }
+        ],
+        "key": 100
+    },
+    "rule": {
+        "source": "testtopic/#",
+        "compute": {
+            "type": "json",
+            "filter": "",
+            "query": {
+                "topicExpression": "$.topic",
+                "payloadExpression": "$.payload"
+            }
+        },
+        "destinations": [
+            ""
+        ]
+    }
+}
+```
 
 ```
 // 接收和处理消息
 mqttCleint.on('message', async function (topic, message) {
     // console.log('从代理服务订阅到的消息：')
     // console.log(topic,'\n', message.toString())
+    const messageJson = JSON.parse(message.toString())
     const rawMessage: RawMessage = {
         topic,
-        payload: message.toString(),
+        payload:messageJson.params,
+        rule:messageJson.rule
     };
-    const result = await dataConversion(rawMessage, rule);
+    const result = await dataConversion(rawMessage);
 
     if (result && result.topic) {
         console.log('转换成功:', JSON.stringify(result));

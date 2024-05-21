@@ -2,7 +2,8 @@ import * as jsonata from 'jsonata';
 
 export type RawMessage = {
     topic: string;
-    payload: string;
+    params: object;
+    rule:Rule
 };
 
 export type Message = {
@@ -54,17 +55,15 @@ export type Rule = {
 }
 
 interface DataConversion {
-    (rawMessage: RawMessage, rule: Rule): Promise<Message>;
+    (rawMessage: RawMessage): Promise<Message>;
 }
 
-export const dataConversion: DataConversion = async function (
-    rawMessage,
-    rule
-) {
+export const dataConversion: DataConversion = async function (rawMessage) {
     try{
+        const rule = rawMessage.rule
         const message: Message = {
             topic: rawMessage.topic,
-            payload: JSON.parse(rawMessage.payload)
+            payload: rawMessage.params
         }
         if (rule.compute.filter) {
             const filterExpression = jsonata(rule.compute.filter);
